@@ -1,0 +1,108 @@
+// GRACIAS A KYLLER POR LA COLABORACION DE ESTA
+// RECOPILACION DE COMANDOS, AYUDO EN CONSEGUIR MUCHOS
+// DE LOS COMANDOS.
+
+
+
+- Descargar ondas de php necesarias xd -
+wget https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+sudo rpm -ivh epel-release-latest-7.noarch.rpm
+subscription-manager repos --enable rhel-7-server-optional-rpms
+
+- ahora hay que descargar php 5.6, Para esto: -
+sudo rpm -Uvh https://mirror.webtatic.com/yum/el7/webtatic-release.rpm
+
+sudo yum install php56w 
+		^
+		|
+- Con este comando se instala automaticamente httpd (apache2.4) -
+
+- Luego algunos paquetes de php necesarios: -
+sudo yum install php56w-mysql php56w-gd php56w-xml php56w-mbstring php56w-zip php56w-mcrypt
+
+- Encender el servidor apache -
+systemctl enable httpd
+systemctl start httpd
+
+- Instalar MariadDB -
+sudo yum install mariadb mariadb-server
+
+Probar si mariadb esta instalado, primero escribiendo:
+mysql --version
+
+Encender mariadb
+systemctl enable mariadb
+systemctl start mariadb
+
+- Recomendable que para esta parte, desactivar el SElinux(firewall de linux) y otorgarse permisos de admin a su usuario. Para eso: -
+
+para firewall 
+nano /etc/selinux/config
+
+En la linea que diga:
+SELINUX=enforcing
+
+modificar a:
+SELINUX=disabled 
+
+Para el user admin:
+nano /etc/sudoers
+
+Busquen una partida donde este una linea asi:
+## user MACHINE=COMMANDS
+
+abajo les aparece una linea asi:
+root		ALL=(ALL)		ALL
+
+tienen que agregar una linea de codigo que diga:
+
+su_user 	ALL=(ALL) 		ALL
+
+donde "su_user" es el nombre de usuario con el que ingresan a la maquina
+
+por ultimo hagan un reboot para reiniciar y que se hagan los cambios:
+sudo reboot
+
+Instalar achievo
+
+- Para no complicarse tanto, ir al directorio /var/www/html y desde ahi hacer:
+wget https://web.archive.org/web/20150501120323if_/http://www.achievo.org/downloads/achievo/achievo-1.4.5.tar.gz
+
+Luego:
+tar -xzvf achievo-1.4.5.tar.gz
+mv achievo-1.4.5 achievo
+
+Luego darle permisos de lectura y escritura a achievo:
+chown apache -R achievo/
+chmod -R 755 achievo/
+sudo systemctl restart httpd
+
+abrir firefox y buscar localhost/achievo
+
+CONFIGURAR BASE DE DATOS.
+
+configurar el acceso a la base de datos en achievo:
+cd /var/www/html/achievo
+nano config.inc.php
+
+en las variables de db, user y password, colocar las que coincidan correctamente, por ejemplo:
+  $config_db["default"]["db"]   = "achievodb";
+  $config_db["default"]["user"] = "achievo";
+  $config_db["default"]["password"] = "sucarnet";
+
+Guardar el archivo y salir. (Ctrl + O, ENTER, Ctrl + X)
+
+Ejecutar lo siguiente:
+mariadb
+create database achievodb;
+GRANT ALL PRIVILEGES ON achievodb.* TO 'achievo'@'localhost' IDENTIFIED BY 'sucarnet';
+ALTER DATABASE achievodb CHARSET=utf8 COLLATE utf8_general_ci;
+
+con Ctrl + D "o tambien" quit 
+pueden salir de mariadb
+
+reiniciar todo
+sudo systemctl restart mariadb httpd
+
+rezar y esperar que funcione
+
